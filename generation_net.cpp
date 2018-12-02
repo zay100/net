@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include "Net.h"
-
+// тестовый комментарий ветка Алиса1
 #define getVertex(a,b) (a+Nx*b)
 
 using namespace std;
