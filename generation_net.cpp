@@ -2,13 +2,15 @@
 #include <fstream>
 #include "Net.h"
 
+#define getVertex(a,b) (a+Nx*b)
+
 using namespace std;
 
 void printVertexArray (int Vertex [][2]); // печать списка вершин
 void printVertexArray_file (int Vertex [][2]);
 void printElements (int *, int *); // печать топологии поэлементно
 int addElement(int , int); // добавляет элемент топологии в массивы IA JA
-int getVertex (int, int); // возвращает ссылку на номер вершины по известным координатам x y
+//int getVertex (int, int); // возвращает ссылку на номер вершины по известным координатам x y
 int mas_init (int*, int);//инициализация массива -1
 int print (int*, int);//печать массива заданной длины в cerr
 int print_cout (int *tmp, int length);//в cout
@@ -332,7 +334,7 @@ int print_cout (int *tmp, int length)//печать в стандартный п
 }
 
 // возвращает номер вершины по координатам
-int getVertex (int x, int y)
+/*int getVertex (int x, int y)
 {
     return x+Nx*y;
-}
+}*/
