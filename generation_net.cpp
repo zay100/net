@@ -1,12 +1,19 @@
 #include <iostream>
+#include <fstream>
 #include "Net.h"
 
 using namespace std;
 
 void printVertexArray (int Vertex [][2]); // печать списка вершин
+void printVertexArray_file (int Vertex [][2]);
 void printElements (int *, int *); // печать топологии поэлементно
 int addElement(int , int); // добавляет элемент топологии в массивы IA JA
 int getVertex (int, int); // возвращает ссылку на номер вершины по известным координатам x y
+int mas_init (int*, int);//инициализация массива -1
+int print (int*, int);//печать массива заданной длины в cerr
+int print_cout (int *tmp, int length);//в cout
+
+ofstream out, out_mesh, out_coord, out_topo, out_bctopo;//поток для записи
 
 int Nx, Ny, Lx, Ly;
 int K, M;
@@ -14,10 +21,43 @@ int Nn, Ne, Ne_actual, Nbf, Ncells, Nk, Nm;//Nn-количество узлов,
 //Ncells - количество четерыехугольников, четырехугольников типа K, четырехугольников типа M Ne_actual - количество элементов в IA
 int * IA, * JA;
 
-int main()
+int * RIA, *RJA;//обратная топология
+
+int main(int argc, char**argv)
 {
-  cout<< "Введите Nx, Ny, Lx, Ly, K, M"<<endl;//M-целые, K-побитые
-  cin >> Nx >> Ny >> Lx >> Ly >> K >> M;//добавить проверку
+  //вывод ошибок в файл
+  ofstream cerrFile("out_err.txt");//откроем файл для вывода
+  cerr.rdbuf(cerrFile.rdbuf());
+  //streambuf *cerrbuf =cerr.rdbuf(); //запомним старый буфер
+  //cerr.rdbuf(out.rdbuf());
+  //cerr.rdbuf(cerrbuf);
+
+  //для записи в файл
+  out.open("./exp.txt");
+  out_mesh.open("./mesh.txt");//содержит Nn, Ne, Nbf
+  out_coord.open("./coordinate.txt");//координаты узлов, Nn строк по 3 значения НАДО ФОРМАТ MSH
+  out_topo.open("./topo.msh");//список элементов, Nе строк, в строках первое значение - число узлов в элементе, затем номера узлов
+  out_bctopo.open("./bctopo.msh");//список внешних граней, Nbf строк, в строках первое значение - число узлов в грани, затем номера узлов, затем метка граничной поверхности. поверхности нумеровать можно так: левая граница 1, правая 2, верхняя 3, нижняя 4.
+
+  //ввод данных
+  if(argc==0)
+  {
+    cout<< "Введите Nx, Ny, Lx, Ly, K, M"<<endl;//M-целые, K-побитые
+    cin >> Nx >> Ny >> Lx >> Ly >> K >> M;//добавить проверку
+  }
+  else
+  {
+    ifstream input(argv[1]);//открываем файл на чтение
+    if(input.is_open())
+      cerr<<"file is open"<<endl;
+    input>>Nx>>Ny>>Lx>>Ly>>K>>M;
+    //cout<<Nx<<Ny << Lx << Ly << K << M;//добавить проверку
+    input.close();
+  }
+
+
+  cerr<<"ОК"<<endl;
+
 
   // предварительные вычисления и инициализация сетки и элементов
   Nn=Nx*Ny;
@@ -25,7 +65,10 @@ int main()
   Nk=Ncells/(K+M)*K+(((Ncells%(K+M))>=K)?K:Ncells%(K+M));
   Nm=Ncells-Nk;
   Ne=Nk*2+Nm;
+  Nbf=(Nx-1)*2+(Ny-1)*2;
   //cout<<"Количество элементов="<< Ne<<endl;
+
+  out_mesh<<"Nn="<<Nn<<endl<<"Ne="<<Ne<<endl<<"Nbf="<<Nbf<<endl;
 
   // координаты вершин основной сетки - вывести в отдельную функцию
   int ANn[Nn][2];
@@ -36,11 +79,17 @@ int main()
   }
 
   // Проверка - вывод координат вершин на печать
-  printVertexArray(ANn);
+  //printVertexArray(ANn);
+  printVertexArray_file (ANn);
+
 
   // заполнение массивов с элементами, вынести в отдельную функцию
   IA = (int *) malloc (sizeof (int)*(Ne+1));//индексный массив
+  mas_init(IA, Ne+1);
   JA = (int *) malloc (sizeof (int)*(Ne*4));//индексный массив с запасом
+  mas_init(JA, Ne*4);
+  //print_cout(IA, Ne+1);
+  //print_cout(JA, Ne*4);
   // !!! добавить проверку что выделение памяти прошло успешно
   Ne_actual=0;
   IA[Ne_actual]=0;
@@ -56,6 +105,60 @@ int main()
   }
   // проверка заполнения списка элементов
   printElements (IA,JA);
+
+  cout<<"ПЕЧАТАЕМ IA и JA"<<endl;
+  print_cout(IA, Ne+1);
+  print_cout(JA, Ne*4);
+
+
+  //обратная топология
+  RIA = (int *) malloc (sizeof (int)*(Nn+1));//индексный массив(номера вершин)
+  RJA = (int *) malloc (sizeof (int)*(Nn*5));//индексный массив с запасом(каким элементам принадлежит)
+  mas_init(RIA, Nn+1);
+  mas_init(RJA, Nn*5);
+
+  int k;
+  int cur_ria=0, cur_rja=0;
+  for (int i=0; i<Nn; i++)
+  {
+    cerr<<"i="<<i<<endl;
+    RIA[cur_ria]=cur_rja;
+    cerr<<"cur_ria="<<cur_ria<<endl;
+    cerr<<"cur_rja="<<cur_rja<<endl;
+
+    int my_tmp=-1;
+    k=0;
+    while(JA[k]!=-1)
+    {
+      cerr<<"JA[k]="<<JA[k]<<endl;
+      if(JA[k]==i)//нашли вершину в JA
+      {
+        cerr<<"заходим в if"<<endl;
+        //тут посчитать номер элемента
+        int j=0;
+        cerr<<"k="<<k<<"IA[j]="<<IA[j]<<"IA[j+1]="<<IA[j+1]<<endl;
+        while (!((IA[j]<=k)&&(k<IA[j+1])))
+        {
+          cerr<<"in WHILE"<<endl;
+          //cerr<<"j="<<j<<"IA[j]="<<IA[j]<<"JA[j]="<<JA[j]<<endl;
+          j++;
+        }
+        my_tmp=j;//номер элемента
+        RJA[cur_rja]=my_tmp;
+        cerr<<"номер элемента my_tmp="<<my_tmp<<"выходим из if"<<endl;
+
+        cur_rja++;
+      }
+      k++;
+    }
+    cur_ria++;
+  }
+
+  cerr<<"печать RIA и RJA"<<endl;
+  print(RIA, Nn+1);
+  print(RJA, Nn*5);
+  cerr<<"конец печати"<<endl;
+
 
   //  заполнение массива ребер - вывести в отдельную функцию
   int ANbf[((Nx-1)*(Ny-1)*2)][4];//[0]-количество узлов в грани; [1],[2]-номера узлов; [3]-номер стороны  1|=|3
@@ -120,6 +223,9 @@ int main()
         int in=JA[j];
   }*/
   // cout << i << "    " << j<<endl;
+
+  cerrFile.close();
+
   return 0;
 }
 
@@ -132,6 +238,17 @@ void printVertexArray (int Vertex [][2])
   for(int i=0; i<Nn; i++)
   {
       cout<<"    "<< i <<"   "<< Vertex[i][0]<<"   "<< Vertex[i][1]<<endl;
+  }
+}
+
+// печать в файл координат основной сетки
+void printVertexArray_file (int Vertex [][2])
+{
+  //out_coord<<"печать массива ANn(для каждого элемента его координаты)"<<endl;
+  //out_coord<<" Номер   Х   Y\n";
+  for(int i=0; i<Nn; i++)
+  {
+      out_coord<<"    "<< i <<"   "<< Vertex[i][0]<<"   "<< Vertex[i][1]<<endl;
   }
 }
 
@@ -188,6 +305,29 @@ int addElement(int p, int type)
       }
     return 0;
   }
+  return 0;
+}
+
+int mas_init (int *tmp, int length)
+{
+  for (int t=0; t<length; t++)
+    tmp[t]=-1;
+  return 0;
+}
+
+int print (int *tmp, int length)//печать ошибок в файл
+{
+  cerr<<"печать массива"<<endl;
+  for (int t=0; t<length; t++)
+    cerr<<tmp[t]<<endl;
+  return 0;
+}
+
+int print_cout (int *tmp, int length)//печать в стандартный поток
+{
+  cout<<"печать массива"<<endl;
+  for (int t=0; t<length; t++)
+    cout<<tmp[t]<<endl;
   return 0;
 }
 
