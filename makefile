@@ -13,4 +13,4 @@ net_lib.o:  net_lib.cpp Net.h
 	$(CC) $(CFLAGS) net_lib.cpp
 
 clean:
-	rm -rf *.o net *.msh
+	rm -rf *.o net *.msh mesh.txt out_err.txt

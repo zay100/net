@@ -42,19 +42,25 @@ int main(int argc, char**argv)
   out_bctopo.open("./bctopo.msh");//список внешних граней, Nbf строк, в строках первое значение - число узлов в грани, затем номера узлов, затем метка граничной поверхности. поверхности нумеровать можно так: левая граница 1, правая 2, верхняя 3, нижняя 4.
 
   //ввод данных
-  if(argc==0)
+  if(argc==1)
   {
+
     cout<< "Введите Nx, Ny, Lx, Ly, K, M"<<endl;//M-целые, K-побитые
     cin >> Nx >> Ny >> Lx >> Ly >> K >> M;//добавить проверку
   }
   else
   {
     ifstream input(argv[1]);//открываем файл на чтение
-    if(input.is_open())
-      cerr<<"file is open"<<endl;
-    input>>Nx>>Ny>>Lx>>Ly>>K>>M;
+    if(input.is_open()) {
+      cout<<"file is open"<<endl;
+      input>>Nx>>Ny>>Lx>>Ly>>K>>M;
     //cout<<Nx<<Ny << Lx << Ly << K << M;//добавить проверку
-    input.close();
+      input.close();
+      }
+    else {
+      cout<<"Невозможно открыть файл \n";
+      return (0);
+    }
   }
   cerr<<"ОК"<<endl;
 
