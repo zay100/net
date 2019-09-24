@@ -27,6 +27,19 @@
 #define MAX_ELEMENTS_PER_NODE 8 //максимальное количество элементов в которых может содержаться узел
 #define MAX_RIBS_PER_NODE 8 //максимальное количество ребер в которых может содержаться узел
 
+// класс ячеек основной сетки
+class _CellClass
+{
+public:
+  int number_; //количество ячеек
+  int * ANcell; // массив со значениями типа ячейки K или М
+  int GetType (int i); //возвращает тип ячейки по номеру ячейки
+  int GetType (int node, int direction); // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
+  _CellClass (int , int, int, int); // стандартный конструктор
+  ~_CellClass(){};
+};
+
+
 //класс сетки
 class NetClass
 {
@@ -36,14 +49,15 @@ class NetClass
   int Nn,Nbf,Ncells,Nk,Nm; // число узлов, ребер, прямоугольных ячеек, ячеек типа K, M
   int ANn;
   int NFaceBC;  //?? количество узлов на внешней грани - разобраться
+
   class VertexClass * vertex_p; // ссылка на массив узлов
   class CellClass * cell_p; // массив ячеек
-  NetClass (int , int , int , int ); //расчет Nn-Nm, типов прямоугольников
-  int getVertex(int a, int b); // номер вершины по известны x y
-
-
+  class _CellClass _Cells;
   class EdgeClass * edge;
 
+  NetClass (int Nx_, int Ny_ , int K_ , int M_ );
+
+  int getVertex(int a, int b); // номер вершины по известны x y
 
 };
 

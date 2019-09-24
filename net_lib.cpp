@@ -3,8 +3,7 @@
 
 
 //расчет Nn-Nm, типов прямоугольников
-NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_)
-{
+NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_): _Cells ( Nx_, Ny_, K_, M_){
   Nx=Nx_;
   Ny=Ny_;
   K=K_;
@@ -15,7 +14,7 @@ NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_)
   Nm=Ncells-Nk;
   Nbf=(Nx_-1)*2+(Ny_-1)*2;
   NFaceBC=(Nx+Ny)*2-4;
-}
+};
 
 // номер вершины по известны x y
 int NetClass::getVertex(int a, int b)
@@ -262,6 +261,17 @@ CellClass::CellClass (class NetClass * net)
   for (int i=0; i<number_; i++) // заполнение вектора типом ячеек
   {
 	     ANcell[i] = (i%(net_p->K+net_p->M)<net_p->K)?DIAG_ASCEND:NO_DIAG;
+	}
+}
+
+// стандартный конструктор
+_CellClass::_CellClass (int Nx, int Ny, int K, int M)
+{
+  number_ = (Nx-1)*(Ny-1);
+  ANcell=new int [number_];
+  for (int i=0; i<number_; i++) // заполнение вектора типом ячеек
+  {
+	     ANcell[i] = (i%(K+M)<K)?DIAG_ASCEND:NO_DIAG;
 	}
 }
 
