@@ -2,8 +2,11 @@
 #include "Net.h"
 
 
-//расчет Nn-Nm, типов прямоугольников
-NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_): _Cells ( Nx_, Ny_, K_, M_){
+
+
+
+NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_)
+{
   Nx=Nx_;
   Ny=Ny_;
   K=K_;
@@ -15,6 +18,82 @@ NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_): _Cells ( Nx_, Ny_, K_, M
   Nbf=(Nx_-1)*2+(Ny_-1)*2;
   NFaceBC=(Nx+Ny)*2-4;
 };
+
+//возвращает тип ячейки по номеру первичной ячейки
+int NetClassNG::GetPrimaryCellType (int i)
+{
+  return (i%(K+M)<K)?DIAG_ASCEND:NO_DIAG;
+}
+
+// возвращает тип ячeйки номеру узла и направлению на ячейку от узла
+int NetClassNG::GetPrimaryCellType (int node, int direction)
+{
+  int cell_number;
+  int x=GetVertexX(node);
+  int y=GetVertexY(node);
+
+  switch (direction)
+  {
+    case NW:
+        if (x==0 || y==0) return NO_ELEMENT;
+        cell_number = (y-1)*(Nx-1)+x-1;
+        return GetPrimaryCellType (cell_number);
+    case NE:
+        if (x==Nx || y==0) return NO_ELEMENT;
+        cell_number = (y-1)*(Nx-1)+x;
+        return GetPrimaryCellType (cell_number);
+    case SE:
+        if (x==Nx || y==Ny) return NO_ELEMENT;
+        cell_number = y*(Nx-1)+x;
+        return GetPrimaryCellType (cell_number);
+        break;
+    case SW:
+        if (x==0 || y==Ny) return NO_ELEMENT;
+        cell_number = y*(Nx-1)+x-1;
+        return GetPrimaryCellType (cell_number);
+    default:
+        return NO_ELEMENT;
+  }
+
+}
+
+//Получить номер столбца узла в сетке по номеру узла
+int NetClassNG::GetVertexX(int i)
+{
+  return ((i<0)||(i>=Nn))?ERROR:i%Nx;
+}
+
+//Получить номер строки узла в сетке по номеру узла
+int NetClassNG::GetVertexY(int i)
+{
+  return (i<0||i>=Nn)?ERROR:i/Nx;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//расчет Nn-Nm, типов прямоугольников
+NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_){
+  Nx=Nx_;
+  Ny=Ny_;
+  K=K_;
+  M=M_;
+  Nn=Nx_*Ny_;
+  Ncells = (Nx_-1)*(Ny_-1);
+  Nk=Ncells/(K_+M_)*K+(((Ncells%(K_+M_))>=K_)?K_:Ncells%(K_+M_));
+  Nm=Ncells-Nk;
+  Nbf=(Nx_-1)*2+(Ny_-1)*2;
+  NFaceBC=(Nx+Ny)*2-4;
+};
+
 
 // номер вершины по известны x y
 int NetClass::getVertex(int a, int b)
@@ -261,17 +340,6 @@ CellClass::CellClass (class NetClass * net)
   for (int i=0; i<number_; i++) // заполнение вектора типом ячеек
   {
 	     ANcell[i] = (i%(net_p->K+net_p->M)<net_p->K)?DIAG_ASCEND:NO_DIAG;
-	}
-}
-
-// стандартный конструктор
-_CellClass::_CellClass (int Nx, int Ny, int K, int M)
-{
-  number_ = (Nx-1)*(Ny-1);
-  ANcell=new int [number_];
-  for (int i=0; i<number_; i++) // заполнение вектора типом ячеек
-  {
-	     ANcell[i] = (i%(K+M)<K)?DIAG_ASCEND:NO_DIAG;
 	}
 }
 

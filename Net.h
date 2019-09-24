@@ -28,23 +28,59 @@
 #define MAX_RIBS_PER_NODE 8 //максимальное количество ребер в которых может содержаться узел
 
 // класс ячеек основной сетки
-class _CellClass
+
+
+class PrimaryCellClassNG
 {
-public:
-  int number_; //количество ячеек
+
+  //int number_; //количество ячеек
+private:
   int * ANcell; // массив со значениями типа ячейки K или М
-  int GetType (int i); //возвращает тип ячейки по номеру ячейки
-  int GetType (int node, int direction); // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
-  _CellClass (int , int, int, int); // стандартный конструктор
-  ~_CellClass(){};
+
+public:
+
+  PrimaryCellClassNG (int , int, int, int); // стандартный конструктор
+  ~PrimaryCellClassNG () {};
 };
+
+
+
+class NetClassNG 
+{
+  public:
+  // int type_k; // для данного варианта всегда  такая / диагональ
+  int Nx,Ny,Lx,Ly,K,M; // параметры для построения сетки
+  int Nn,Nbf,Ncells,Nk,Nm; // число узлов, ребер, прямоугольных ячеек, ячеек типа K, M
+  int ANn; //Проверерить где используется, при необходимости удалить
+  int NFaceBC;  // количество узлов на внешней грани - разобраться
+
+  int GetPrimaryCellType (int i); //возвращает тип ячейки по номеру ячейки
+  int GetPrimaryCellType (int node, int direction); // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
+  int GetVertexX(int i); //Получить номер столбца узла в сетке по номеру узла
+  int GetVertexY(int i); //Получить номер строки узла в сетке по номеру узла
+
+  NetClassNG (int Nx_, int Ny_ , int K_ , int M_ );
+
+  // int getVertex(int a, int b); // номер вершины по известны x y
+
+};
+
+
+
+
+
+
+
+
+
+
 
 
 //класс сетки
 class NetClass
 {
   public:
-  int type_k; // для данного варианта всегда  такая / диагональ
+  // const static int type_k=DIAG_ASCEND; // для данного варианта всегда  такая / диагональ
   int Nx,Ny,Lx,Ly,K,M; // параметры для построения сетки
   int Nn,Nbf,Ncells,Nk,Nm; // число узлов, ребер, прямоугольных ячеек, ячеек типа K, M
   int ANn;
@@ -52,7 +88,7 @@ class NetClass
 
   class VertexClass * vertex_p; // ссылка на массив узлов
   class CellClass * cell_p; // массив ячеек
-  class _CellClass _Cells;
+  //class _CellClass _Cells;
   class EdgeClass * edge;
 
   NetClass (int Nx_, int Ny_ , int K_ , int M_ );
@@ -60,6 +96,7 @@ class NetClass
   int getVertex(int a, int b); // номер вершины по известны x y
 
 };
+
 
 class EdgeClass
 {
