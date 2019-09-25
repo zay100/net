@@ -44,9 +44,27 @@ public:
 
 };
 
+class TopoClassNG
+{
+public:
+
+  int NeTopo; // общее число элементов в топологии
+  int NnTopo; // количество узлов в топологии
+  // хранение прямой топологии
+  int * IAtopo;
+  int * JAtopo;
+  // хранение обратной топологии
+  int * IAtopoRevert;
+  int * JAtopoRevert;
+
+  void printTopoElementsNG ();
+
+  TopoClassNG (){}; // конструктор по умолчанию
+  ~TopoClassNG(){};
+};
 
 
-class NetClassNG : public EdgeClassNG
+class NetClassNG : public EdgeClassNG, public TopoClassNG
 {
   public:
   // int type_k; // для данного варианта всегда  такая / диагональ
@@ -55,10 +73,13 @@ class NetClassNG : public EdgeClassNG
   int ANn; //Проверерить где используется, при необходимости удалить
   int NFaceBC;  // количество узлов на внешней грани - разобраться
 
-  int GetPrimaryCellType (int i); //возвращает тип ячейки по номеру ячейки
+  int GetPrimaryCellType (int i) { return (i%(K+M)<K)?DIAG_ASCEND:NO_DIAG;} //возвращает тип ячейки по номеру ячейки
   int GetPrimaryCellType (int node, int direction); // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
-  int GetVertexX(int i); //Получить номер столбца узла в сетке по номеру узла
-  int GetVertexY(int i); //Получить номер строки узла в сетке по номеру узла
+  int GetVertexX(int i) {return ((i<0)||(i>=Nn))?ERROR:i%Nx;} //Получить номер столбца узла в сетке по номеру узла
+  int GetVertexY(int i) {return ((i<0)||(i>=Nn))?ERROR:i/Nx;} //Получить номер строки узла в сетке по номеру узла
+  int GetVertexNG (int a, int b) {return (a+Nx*b);} // возврат номера узла по его положению на сетке
+
+  void InitTopo (int K, int M, int Nk, int Nm, int Ncells, int Nx, int Nn);
 
   NetClassNG (int Nx_, int Ny_ , int K_ , int M_ );
 

@@ -17,13 +17,8 @@ NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_) : EdgeClassNG (Nx_, N
   Nm=Ncells-Nk;
   Nbf=(Nx_-1)*2+(Ny_-1)*2;
   NFaceBC=(Nx+Ny)*2-4;
+  InitTopo (K, M, Nk, Nm, Ncells, Nx, Nn);
 };
-
-//возвращает тип ячейки по номеру первичной ячейки
-int NetClassNG::GetPrimaryCellType (int i)
-{
-  return (i%(K+M)<K)?DIAG_ASCEND:NO_DIAG;
-}
 
 // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
 int NetClassNG::GetPrimaryCellType (int node, int direction)
@@ -55,18 +50,6 @@ int NetClassNG::GetPrimaryCellType (int node, int direction)
         return NO_ELEMENT;
   }
 
-}
-
-//Получить номер столбца узла в сетке по номеру узла
-int NetClassNG::GetVertexX(int i)
-{
-  return ((i<0)||(i>=Nn))?ERROR:i%Nx;
-}
-
-//Получить номер строки узла в сетке по номеру узла
-int NetClassNG::GetVertexY(int i)
-{
-  return (i<0||i>=Nn)?ERROR:i/Nx;
 }
 
 // конструктор класс внешних граней
@@ -129,11 +112,124 @@ void EdgeClassNG::PrintEdgeArray()
 
 }
 
+// инициализация массивов топологии из данных о сети
+void NetClassNG::InitTopo ( int K, int M, int Nk, int Nm, int Ncells, int Nx , int Nn)
+{
+//заполнение прямой топологии
+  NeTopo = Nk*2+Nm; // количество элементов топологии
+  NnTopo = Nn;
+  int JAmax = Nk*3*2+Nm*4; //количество вершин
+
+  IAtopo = new int[NeTopo+1];
+  if(!IAtopo) cout<<"Ошибка при создании массива IAtopo"<<endl;
+  JAtopo = new int[JAmax];
+  if(!IAtopo) cout<<"Ошибка при создании массива JAtopo"<<endl;
+  IAtopo[0]=0;
+  IAtopo[1]=0;
+
+  int base, count = 0; // номер первой вершины очередного элемента в JA, номер очередного элемента топологии
+  for (int p=0; p<Ncells; p++) //пробегаем по всем первичным ячейкам
+  {
+    int row = p/(Nx-1); // определяем столбец и колонку для очередной ячейки
+    int col = p%(Nx-1); // он же эквивалент для левого верхнего узла
+    if (p%(K+M)<K)  // для ячеек типа к добавить два элемента МОЖНО ЗАМЕНИТЬ НА GetPrimaryCellType
+    {
+//        addTopoElement(p, UP_LEFT);
+        base = IAtopo[count];
+        JAtopo[base]=GetVertexNG(col, row);
+        JAtopo[base+1]=GetVertexNG(col+1,row);
+        JAtopo[base+2]=GetVertexNG(col,row+1);
+        IAtopo[count+1]=base+3;
+        count++;
+//        addTopoElement(p, DOWN_RIGHT);
+        base = IAtopo[count];
+        JAtopo[base]=GetVertexNG(col+1, row);
+        JAtopo[base+1]=GetVertexNG(col+1,row+1);
+        JAtopo[base+2]=GetVertexNG(col,row+1);
+        IAtopo[count+1]=base+3;
+        count++;
+    }
+    else  // ячейки типа М
+    {
+//        addTopoElement(p, SQUARE);
+        base = IAtopo[count];
+        JAtopo[base]=GetVertexNG(col, row);
+        JAtopo[base+1]=GetVertexNG(col+1,row);
+        JAtopo[base+2]=GetVertexNG(col+1,row+1);
+        JAtopo[base+3]=GetVertexNG(col,row+1);
+        IAtopo[count+1]=base+4;
+        count++;
+    }
+  }
+
+// заполнение обратной топологии
+
+  int ** temp_node_array; // массив для группировки элементов по вершинам
+  temp_node_array = new int * [Nn]; // количество строк равно количеству элементов
+  for (int i=0; i< Nn; i++) // столбцов по максимуму элементов плюс один на счетчик кол-ва
+    temp_node_array[i] = new int [MAX_ELEMENTS_PER_NODE+1];
+  // инициализация промежуточного массива в 0, ВОЗМОЖНО ЛИШНЕЕ
+  for (int i=0; i< Nn; i++)
+    for (int j=0; j<MAX_ELEMENTS_PER_NODE+1;j++)
+      temp_node_array[i][j]=0;
+
+  // заполнение промежуточного массива первый столбец - кол-во элементов для вершины далее номера элементов топологии
+  int node, tmp, counter=0;
+  for (int i=0; i< NeTopo; i++) // i - номер элемента топологии
+  {
+  // ПОСМОТРЕТЬ НА ВОЗМОЖНОСТЬ ОПТИМИЗАЦИИ
+    for (int j=IAtopo[i];j<IAtopo[i+1];j++)
+    {
+      node=JAtopo[j];
+      tmp = temp_node_array[node][0]; //количество уже записанных элементов для вершины
+      temp_node_array[node][tmp+1]=i; // добавляем номер элемента в следующую свободную ячейку для вершины
+      temp_node_array[node][0]++; // увеличиваем счетчик добавленных элементов
+      counter++;
+    }
+  }
+  IAtopoRevert = new int [Nn+1];
+  JAtopoRevert = new int  [counter+1];
+  // заполнение обратной топологии
+  IAtopoRevert[0]=0;
+
+  for (int i=0; i<Nn; i++)
+  {
+    base = IAtopoRevert[i];
+    IAtopoRevert[i+1]=IAtopoRevert[i]+temp_node_array[i][0];
+    for (int j=0; j<temp_node_array[i][0]; j++)
+      JAtopoRevert[base+j]=temp_node_array[i][j+1];
+  }
+
+  // !!!!! УДАЛИТЬ АККУРАТНО ИНАЧЕ УТЕЧКА ПАМЯТИ
+  delete [] temp_node_array ;
+}
+
+void TopoClassNG::printTopoElementsNG ()
+{
+  cout<<"\nПечать списка элементов топологии класса NetClassNG"<<endl;
+  cout<<"Всего элементов топологии "<< NeTopo<<endl;
+    cout<<"Элемент  №1   №2   №3   №4\n";
+  for(int i=0; i<NeTopo; i++)
+  {
+      cout<<" "<< i<< "     ";
+      for(int j=IAtopo[i]; j<IAtopo[i+1]; j++) cout<<"    "<< JAtopo[j];
+      cout<<endl;
+  }
+
+  cout<<"\nПечать обратно топологии класса NetClassNG"<<endl;
+  cout<<"Всего элементов топологии "<< NeTopo<<endl;
+    cout<<"Элемент  №1   №2   №3   №4  №5   №6   №7    №8\n";
+    cout<<"первый элемент"<<JAtopoRevert[0]<<endl;
+  for(int i=0; i<NnTopo; i++)
+  {
+      cout<<"node "<< i<< " elements ";
+      for(int j=IAtopoRevert[i]; j<IAtopoRevert[i+1]; j++) cout<<"    "<< JAtopoRevert[j];
+      cout<<endl;
+  }
 
 
 
-
-
+}
 
 
 //расчет Nn-Nm, типов прямоугольников
@@ -149,7 +245,6 @@ NetClass::NetClass (int Nx_, int Ny_ , int K_, int M_){
   Nbf=(Nx_-1)*2+(Ny_-1)*2;
   NFaceBC=(Nx+Ny)*2-4;
 };
-
 
 // номер вершины по известны x y
 int NetClass::getVertex(int a, int b)

@@ -65,9 +65,8 @@ int main(int argc, char**argv)
   cerr<<"ОК"<<endl;
 
   // генерерация сетки элементов, топологий и тп через конструкторы порядок важен
-  class NetClass net (Nx, Ny, K, M);
-  class NetClassNG netNG (Nx, Ny, K, M);
-  class CellClass cells (&net);
+  // class NetClass net (Nx, Ny, K, M);
+/*  class CellClass cells (&net);
   net.cell_p=&cells;
   class VertexClass vertex (&net);
   net.vertex_p=&vertex;
@@ -75,6 +74,11 @@ int main(int argc, char**argv)
   class TopoClass topo (& net);
   class TopoClass r_topo (& topo);
   class NNadjClass neighbors (&net);
+*/
+  class NetClassNG netNG (Nx, Ny, K, M);
+
+
+/*
 
   //ВЫВОД В ФАЙЛ ПЕРЕДЕЛАТЬ НА ФУНКЦИИ
   // вывод в файл параметров сетки
@@ -108,8 +112,10 @@ int main(int argc, char**argv)
   printTopoElements (&topo);
   printVertexArray ( &vertex );
   printEdgeArray ( &edge);
-  netNG.PrintEdgeArray();
   printTopoElements (&r_topo);
+*/
+  netNG.PrintEdgeArray();
+  netNG.printTopoElementsNG();
 
   cerrFile.close();
   return 0;
