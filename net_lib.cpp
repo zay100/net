@@ -17,7 +17,7 @@ NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_) : EdgeClassNG (Nx_, N
   Nm=Ncells-Nk;
   Nbf=(Nx_-1)*2+(Ny_-1)*2;
   NFaceBC=(Nx+Ny)*2-4;
-  InitTopo (K, M, Nk, Nm, Ncells, Nx, Nn);
+  InitTopo (K, M, Nk, Nm, Ncells, Nx, Nn, this);
 };
 
 // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
@@ -113,7 +113,7 @@ void EdgeClassNG::PrintEdgeArray()
 }
 
 // инициализация массивов топологии из данных о сети
-void NetClassNG::InitTopo ( int K, int M, int Nk, int Nm, int Ncells, int Nx , int Nn)
+void NetClassNG::InitTopo ( int K, int M, int Nk, int Nm, int Ncells, int Nx , int Nn, class NetClassNG * net_p)
 {
 //заполнение прямой топологии
   NeTopo = Nk*2+Nm; // количество элементов топологии
@@ -202,32 +202,94 @@ void NetClassNG::InitTopo ( int K, int M, int Nk, int Nm, int Ncells, int Nx , i
 
   // !!!!! УДАЛИТЬ АККУРАТНО ИНАЧЕ УТЕЧКА ПАМЯТИ
   delete [] temp_node_array ;
+
+  // заполнение таблицы связанных узлов
+  IAadj = new int [Nn+1];
+  JAadj = new int [Nn*MAX_RIBS_PER_NODE];  //оценка сверху, можно лучше
+  IAadj[0]=IAadj[1]=0;
+  int m; // можно использовать ранее использованную переменную
+
+  for (int i=0; i<Nn; i++) // перебираем все точки
+  {
+    m=0;
+    base = IAadj[i];
+    if ((i%Nx)<(Nx-1))//ребро справа
+    {
+      JAadj[base+m]=i+1;
+      m++;
+    }
+    if ((i%Nx)!=0)//ребро слева
+    {
+      JAadj[base+m]=i-1;
+      m++;
+    }
+    if (i>=Nx)//ребро сверху и верхние диагонали
+    {
+      JAadj[base+m]=i-Nx;
+      m++;
+      if ((net_p->GetVertexX(i)<Nx-1) && (net_p->GetPrimaryCellType(i, NE)==DIAG_ASCEND))
+      {
+        JAadj[base+m]=i-Nx+1;
+        m++;
+      }
+      if ((net_p->GetVertexX(i)>0) && (net_p->GetPrimaryCellType(i, NW)==DIAG_DESCEND))
+      {
+        JAadj[base+m]=i-Nx-1;
+        m++;
+      }
+    }
+    if (i < Nn - Nx)//ребро вниз и нижние диагонали
+    {
+      JAadj[base+m]=i+net_p->Nx;
+      m++;
+      if ((net_p->GetVertexX(i)<Nx-1) && (net_p->GetPrimaryCellType(i, SE)==DIAG_DESCEND))
+      {
+        JAadj[base+m]=i+Nx+1;
+        m++;
+      }
+      if ((net_p->GetVertexX(i)>0) && (net_p->GetPrimaryCellType(i, SW)==DIAG_ASCEND))
+      {
+        JAadj[base+m]=i+Nx-1;
+        m++;
+      }
+    }
+    IAadj[i+1]=base+m;
+  }
+  NnAdj=IAadj[Nn];
+
 }
 
 void TopoClassNG::printTopoElementsNG ()
 {
   cout<<"\nПечать списка элементов топологии класса NetClassNG"<<endl;
   cout<<"Всего элементов топологии "<< NeTopo<<endl;
-    cout<<"Элемент  №1   №2   №3   №4\n";
+    cout<<"Элемент             Узлы\n";
   for(int i=0; i<NeTopo; i++)
   {
-      cout<<" "<< i<< "     ";
+      cout<<"Element "<< i<< "   Nodes ";
       for(int j=IAtopo[i]; j<IAtopo[i+1]; j++) cout<<"    "<< JAtopo[j];
       cout<<endl;
   }
 
   cout<<"\nПечать обратно топологии класса NetClassNG"<<endl;
-  cout<<"Всего элементов топологии "<< NeTopo<<endl;
-    cout<<"Элемент  №1   №2   №3   №4  №5   №6   №7    №8\n";
-    cout<<"первый элемент"<<JAtopoRevert[0]<<endl;
+  cout<<"Всего узлов "<< NnTopo<<endl;
+    cout<<"Узел            Элементы топологии\n";
   for(int i=0; i<NnTopo; i++)
   {
-      cout<<"node "<< i<< " elements ";
+      cout<<"Node "<< i<< " Elements ";
       for(int j=IAtopoRevert[i]; j<IAtopoRevert[i+1]; j++) cout<<"    "<< JAtopoRevert[j];
       cout<<endl;
   }
 
-
+  cout<<"\nПечать списка ребер NetClassNG"<<endl;
+  cout<<"Всего ребер "<< NnAdj<<endl;
+    cout<<"Узел                     Смежные узлы\n";
+  for(int i=0; i<NnTopo; i++)
+  {
+      cout<<"Node "<< i<< " Adjusted nodes  ";
+      for(int j=IAadj[i]; j<IAadj[i+1]; j++) cout<<"    "<< JAadj[j];
+      cout<<endl;
+  }
 
 }
 

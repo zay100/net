@@ -50,12 +50,16 @@ public:
 
   int NeTopo; // общее число элементов в топологии
   int NnTopo; // количество узлов в топологии
+  int NnAdj; // количество ребер
   // хранение прямой топологии
   int * IAtopo;
   int * JAtopo;
   // хранение обратной топологии
   int * IAtopoRevert;
   int * JAtopoRevert;
+  // хранение соседних связанных узлов
+  int * IAadj;
+  int * JAadj;
 
   void printTopoElementsNG ();
 
@@ -79,7 +83,7 @@ class NetClassNG : public EdgeClassNG, public TopoClassNG
   int GetVertexY(int i) {return ((i<0)||(i>=Nn))?ERROR:i/Nx;} //Получить номер строки узла в сетке по номеру узла
   int GetVertexNG (int a, int b) {return (a+Nx*b);} // возврат номера узла по его положению на сетке
 
-  void InitTopo (int K, int M, int Nk, int Nm, int Ncells, int Nx, int Nn);
+  void InitTopo (int K, int M, int Nk, int Nm, int Ncells, int Nx, int Nn, class NetClassNG * net_p);
 
   NetClassNG (int Nx_, int Ny_ , int K_ , int M_ );
 
