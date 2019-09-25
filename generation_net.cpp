@@ -66,6 +66,7 @@ int main(int argc, char**argv)
 
   // генерерация сетки элементов, топологий и тп через конструкторы порядок важен
   class NetClass net (Nx, Ny, K, M);
+  class NetClassNG netNG (Nx, Ny, K, M);
   class CellClass cells (&net);
   net.cell_p=&cells;
   class VertexClass vertex (&net);
@@ -107,6 +108,7 @@ int main(int argc, char**argv)
   printTopoElements (&topo);
   printVertexArray ( &vertex );
   printEdgeArray ( &edge);
+  netNG.PrintEdgeArray();
   printTopoElements (&r_topo);
 
   cerrFile.close();
@@ -133,6 +135,8 @@ void printEdgeArray (EdgeClass* edge)
     cout<<"n="<<n<<' '<<edge->ANbf[n][0]<<" "<<edge->ANbf[n][1]<<" "<<edge->ANbf[n][2]<<" "<<edge->ANbf[n][3]<<endl;
   }
 }
+
+
 
 // печать в файл координат основной сетки
 /*

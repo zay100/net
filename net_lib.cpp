@@ -1,11 +1,11 @@
 #include <iostream>
 #include "Net.h"
 
+using namespace std;
 
 
 
-
-NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_)
+NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_) : EdgeClassNG (Nx_, Ny_)
 {
   Nx=Nx_;
   Ny=Ny_;
@@ -69,9 +69,65 @@ int NetClassNG::GetVertexY(int i)
   return (i<0||i>=Nn)?ERROR:i/Nx;
 }
 
+// конструктор класс внешних граней
+EdgeClassNG::EdgeClassNG (int Nx, int Ny)
+{
+
+  EdgeNumbers = ((Nx-1)+(Ny-1))*2;
+  ANbf = new int * [EdgeNumbers];  // выделение памяти для массива ребер граней
+  for (int i=0; i< EdgeNumbers; i++)
+    ANbf[i] = new int [4];
+
+  int n, m=0;
+  // верхняя грань
+  for(n=0; n<Nx-1; n++)
+  {
+      ANbf[m][0]=Nx;
+      ANbf[m][1]=n;
+      ANbf[m][2]=n+1;
+      ANbf[m][3]=2;
+      m++;
+  }
+  // правая грань
+  for(n=0; n<Ny-1; n++)
+  {
+      ANbf[m][0]=Ny;
+      ANbf[m][1]=(n+1)*Nx-1;
+      ANbf[m][2]=(n+2)*Nx-1;
+      ANbf[m][3]=3;
+      m++;
+  }
+  // нижняя грань
+  int base=Nx*(Ny-1);
+  for(n=0; n<Nx-1; n++)
+  {
+      ANbf[m][0]=Nx;
+      ANbf[m][1]=base+n;
+      ANbf[m][2]=base+n+1;
+      ANbf[m][3]=4;
+      m++;
+  }
+  // левая грань
+  for(n=0; n<Ny-1; n++)
+  {
+      ANbf[m][0]=Ny;
+      ANbf[m][1]=Nx*n;
+      ANbf[m][2]=Nx*(n+1);
+      ANbf[m][3]=1;
+      m++;
+  }
+}
+
+void EdgeClassNG::PrintEdgeArray()
+{
+  cout<<"печать массива граней из объекта NetClassNG"<<endl;
+  for(int n=0;n<EdgeNumbers;n++)
+  {
+    cout<<"n="<<n<<' '<<ANbf[n][0]<<" "<<ANbf[n][1]<<" "<<ANbf[n][2]<<" "<<ANbf[n][3]<<endl;
+  }
 
 
-
+}
 
 
 

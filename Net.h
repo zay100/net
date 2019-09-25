@@ -30,22 +30,23 @@
 // класс ячеек основной сетки
 
 
-class PrimaryCellClassNG
+
+class EdgeClassNG
 {
-
-  //int number_; //количество ячеек
-private:
-  int * ANcell; // массив со значениями типа ячейки K или М
-
 public:
+  int EdgeNumbers; // количество ребер на гранях
+  int ** ANbf; // ?? номера двух вершин и номер грания с левой=1 по часовой
 
-  PrimaryCellClassNG (int , int, int, int); // стандартный конструктор
-  ~PrimaryCellClassNG () {};
+  EdgeClassNG (int , int);
+  ~EdgeClassNG(){};
+
+  void PrintEdgeArray();
+
 };
 
 
 
-class NetClassNG 
+class NetClassNG : public EdgeClassNG
 {
   public:
   // int type_k; // для данного варианта всегда  такая / диагональ
@@ -64,8 +65,6 @@ class NetClassNG
   // int getVertex(int a, int b); // номер вершины по известны x y
 
 };
-
-
 
 
 
