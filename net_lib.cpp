@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include "Net.h"
 
 using namespace std;
@@ -327,9 +328,17 @@ CellClassNG::CellClassNG (int Nx, int Ny, int K, int M)
 	}
 }
 
+void VertexClassNG::ExportMesh (const char * name)
+{
+  ofstream fs;
 
-
-
+  // добавить проверки на правильность
+  fs.open(name);
+  for (int i=0; i<Nn; i++)
+    fs << i <<" "<< ANn[i][0] << " " << ANn[i][1]<< endl;
+  fs.close();
+  return;
+}
 
 
 

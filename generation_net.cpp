@@ -4,6 +4,8 @@
 // тестовый комментарий ветка Алиса1
 #define getVertex(a,b) (a+Nx*(b))
 
+#define FILE_EXPORT_VERTEX "./coordinate.msh"
+
 using namespace std;
 
 void printVertexArray (class VertexClass *); // печать списка вершин
@@ -28,7 +30,8 @@ int * RIA, *RJA;//обратная топология
 
 int main(int argc, char**argv)
 {
-  ofstream out, out_mesh, out_coord, out_topo, out_bctopo;//поток для записи
+  const char * filename;
+  ofstream out, out_mesh, out_topo, out_bctopo;//поток для записи
   ofstream cerrFile("out_err.txt");//откроем файл для вывода
   cerr.rdbuf(cerrFile.rdbuf());
   streambuf *cerrbuf =cerr.rdbuf(); //запомним старый буфер
@@ -37,7 +40,7 @@ int main(int argc, char**argv)
   //для записи в файл
   //out.open("./exp.txt");
   out_mesh.open("./mesh.txt");//содержит Nn, Ne, Nbf
-  out_coord.open("./coordinate.msh");//координаты узлов, Nn строк по 3 значения НАДО ФОРМАТ MSH
+  //out_coord.open("./coordinate.msh");//координаты узлов, Nn строк по 3 значения НАДО ФОРМАТ MSH
   out_topo.open("./topo.msh");//список элементов, Nе строк, в строках первое значение - число узлов в элементе, затем номера узлов
   out_bctopo.open("./bctopo.msh");//список внешних граней, Nbf строк, в строках первое значение - число узлов в грани, затем номера узлов, затем метка граничной поверхности. поверхности нумеровать можно так: левая граница 1, правая 2, верхняя 3, нижняя 4.
 
@@ -114,6 +117,10 @@ int main(int argc, char**argv)
   printEdgeArray ( &edge);
   printTopoElements (&r_topo);
 */
+  filename = FILE_EXPORT_VERTEX;
+  netNG.ExportMesh(filename);
+
+
   netNG.PrintEdgeArray();
   netNG.printTopoElementsNG();
 

@@ -58,6 +58,7 @@ public:
   //int GetY(int i);
   int GetVertexX(int i) {return ((i<0)||(i>=Nn))?ERROR:ANn[i][0];} //Получить номер столбца узла в сетке по номеру узла
   int GetVertexY(int i) {return ((i<0)||(i>=Nn))?ERROR:ANn[i][1];} //Получить номер строки узла в сетке по номеру узла
+  void ExportMesh(const char *);
   VertexClassNG (int Nx, int Ny); // стандартный конструктор
   ~VertexClassNG (){};
 };
