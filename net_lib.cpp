@@ -5,27 +5,26 @@ using namespace std;
 
 
 
-NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_) : EdgeClassNG (Nx_, Ny_)
+NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_) : VertexClassNG (Nx_, Ny_), CellClassNG (Nx_, Ny_, K_, M_), EdgeClassNG (Nx_, Ny_)
 {
-  Nx=Nx_;
-  Ny=Ny_;
-  K=K_;
-  M=M_;
-  Nn=Nx_*Ny_;
-  Ncells = (Nx_-1)*(Ny_-1);
-  Nk=Ncells/(K_+M_)*K+(((Ncells%(K_+M_))>=K_)?K_:Ncells%(K_+M_));
-  Nm=Ncells-Nk;
+//  Nx=Nx_;
+//  Ny=Ny_;
+//  K=K_;
+//  M=M_;
+  //Nn=Nx_*Ny_;
+  //Nk=Ncells/(K_+M_)*K+(((Ncells%(K_+M_))>=K_)?K_:Ncells%(K_+M_));
+  //Nm=Ncells-Nk;
   Nbf=(Nx_-1)*2+(Ny_-1)*2;
   NFaceBC=(Nx+Ny)*2-4;
-  InitTopo (K, M, Nk, Nm, Ncells, Nx, Nn, this);
+  InitTopo (K_, M_, Ncells, Nx, Nn, this);
 };
 
-// возвращает тип ячeйки номеру узла и направлению на ячейку от узла
+// возвращает тип ячeйки номеру узла и направлению на ячейку от узла, перегружена
 int NetClassNG::GetPrimaryCellType (int node, int direction)
 {
   int cell_number;
-  int x=GetVertexX(node);
-  int y=GetVertexY(node);
+  int x=VertexClassNG::GetVertexX(node);
+  int y=VertexClassNG::GetVertexY(node);
 
   switch (direction)
   {
@@ -57,6 +56,8 @@ EdgeClassNG::EdgeClassNG (int Nx, int Ny)
 {
 
   EdgeNumbers = ((Nx-1)+(Ny-1))*2;
+  NFaceBC = (Nx+Ny-2)*2;
+  Nbf = (Nx+Ny-2)*2;
   ANbf = new int * [EdgeNumbers];  // выделение памяти для массива ребер граней
   for (int i=0; i< EdgeNumbers; i++)
     ANbf[i] = new int [4];
@@ -113,9 +114,12 @@ void EdgeClassNG::PrintEdgeArray()
 }
 
 // инициализация массивов топологии из данных о сети
-void NetClassNG::InitTopo ( int K, int M, int Nk, int Nm, int Ncells, int Nx , int Nn, class NetClassNG * net_p)
+void NetClassNG::InitTopo ( int K, int M, int Ncells, int Nx , int Nn, class NetClassNG * net_p)
 {
 //заполнение прямой топологии
+  int Nk=Ncells/(K+M)*K+(((Ncells%(K+M))>=K)?K:Ncells%(K+M));
+  int Nm=Ncells-Nk;
+
   NeTopo = Nk*2+Nm; // количество элементов топологии
   NnTopo = Nn;
   int JAmax = Nk*3*2+Nm*4; //количество вершин
@@ -292,6 +296,45 @@ void TopoClassNG::printTopoElementsNG ()
   }
 
 }
+
+VertexClassNG::VertexClassNG ( int Nx_, int Ny_) // стандартный конструктор
+{
+  Nx= Nx_;
+  Ny= Ny_;
+  Nn= Nx *Ny;
+  ANn=new int * [Nn];
+  for (int i=0; i<Nn; i++) // создание двумерного массива нужного размера
+  {
+	     ANn[i] = new int [2];
+	     if (!ANn[i]) std::cout<<"ошибка создания массива"<<std::endl;
+  }
+  for (int i=0; i<Nn; i++) // заполнение координат вершин квадратной сетки
+  {
+    ANn[i][0]=i%Nx;
+    ANn[i][1]=i/Nx;
+  }
+}
+
+CellClassNG::CellClassNG (int Nx, int Ny, int K, int M)
+{
+  NxCells = Nx - 1;
+  NyCells = Ny - 1;
+  Ncells = NxCells * NyCells;
+  ANcell=new int [Ncells];  // добавить проверку на ошибку
+  for (int i=0; i<Ncells; i++) // заполнение вектора типом ячеек СПЕЦИФИЧНО ДЛЯ ВАРИАНТА ЗАДАНИЯ
+  {
+	     ANcell[i] = (i%(K+M)<K)?DIAG_ASCEND:NO_DIAG;
+	}
+}
+
+
+
+
+
+
+
+
+
 
 
 //расчет Nn-Nm, типов прямоугольников
