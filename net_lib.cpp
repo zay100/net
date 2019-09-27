@@ -4,8 +4,6 @@
 
 using namespace std;
 
-
-
 NetClassNG::NetClassNG (int Nx_, int Ny_ , int K_, int M_) : VertexClassNG (Nx_, Ny_), CellClassNG (Nx_, Ny_, K_, M_), EdgeClassNG (Nx_, Ny_)
 {
 //  Nx=Nx_;
@@ -262,7 +260,77 @@ void NetClassNG::InitTopo ( int K, int M, int Ncells, int Nx , int Nn, class Net
   }
   NnAdj=IAadj[Nn];
 
+  testIAJA.IA=IAtopo;
+  testIAJA.JA=JAtopo;
+  testIAJA.NnElements=NeTopo;
+  testIAJA.IAJAmakeRevert();
+
+
 }
+
+
+
+void IA_JA::IAJAmakeRevert()
+{
+
+  if (IA == NULL || JA == NULL || NnElements==0)
+  {
+    cerr<<"Попытка обратить пустой объект IAJA\n";
+    return;
+  }
+
+  // определение количеств элементов в обратной матрице
+
+  NnRevertElements=0;
+  for (int i=0; i<IA[NnElements];i++)
+    NnRevertElements = (NnRevertElements<JA[i]?JA[i]:NnRevertElements);
+  NnRevertElements++;
+
+
+  int ** temp_node_array; // массив для группировки элементов по вершинам
+  temp_node_array = new int * [NnRevertElements]; // количество строк равно количеству элементов
+  for (int i=0; i< NnRevertElements; i++) // столбцов по максимуму элементов плюс один на счетчик кол-ва
+    temp_node_array[i] = new int [MAX_ELEMENTS_PER_NODE+1];
+  // инициализация промежуточного массива в 0, ВОЗМОЖНО ЛИШНЕЕ
+  for (int i=0; i< NnRevertElements; i++)
+    for (int j=0; j<MAX_ELEMENTS_PER_NODE+1;j++)
+      temp_node_array[i][j]=0;
+
+  // заполнение промежуточного массива первый столбец - кол-во элементов для вершины далее номера элементов топологии
+  int node, tmp, counter=0;
+  for (int i=0; i< NnElements; i++) // i - номер элемента топологии
+  {
+  // ПОСМОТРЕТЬ НА ВОЗМОЖНОСТЬ ОПТИМИЗАЦИИ
+    for (int j=IA[i];j<IA[i+1];j++)
+    {
+      node=JA[j];
+      tmp = temp_node_array[node][0]; //количество уже записанных элементов для вершины
+      temp_node_array[node][tmp+1]=i; // добавляем номер элемента в следующую свободную ячейку для вершины
+      temp_node_array[node][0]++; // увеличиваем счетчик добавленных элементов
+      counter++;
+    }
+  }
+  IArevert = new int [NnRevertElements+1];
+  JArevert = new int  [counter+1];
+  // заполнение обратной топологии
+  IArevert[0]=0;
+
+  int base;
+  for (int i=0; i<NnRevertElements; i++)
+  {
+    base = IArevert[i];
+    IArevert[i+1]=IArevert[i]+temp_node_array[i][0];
+    for (int j=0; j<temp_node_array[i][0]; j++)
+      JArevert[base+j]=temp_node_array[i][j+1];
+  }
+
+  // !!!!! УДАЛИТЬ АККУРАТНО ИНАЧЕ УТЕЧКА ПАМЯТИ
+  delete [] temp_node_array ;
+}
+
+
+
+
 
 void TopoClassNG::printTopoElementsNG ()
 {
@@ -293,6 +361,26 @@ void TopoClassNG::printTopoElementsNG ()
   {
       cout<<"Node "<< i<< " Adjusted nodes  ";
       for(int j=IAadj[i]; j<IAadj[i+1]; j++) cout<<"    "<< JAadj[j];
+      cout<<endl;
+  }
+
+  cout<<"\nПечать топологии из класса IA_JA"<<endl;
+  cout<<"Всего элементов "<< testIAJA.NnElements<<endl;
+    cout<<"Элемент                     узлы\n";
+  for(int i=0; i<testIAJA.NnElements; i++)
+  {
+      cout<<"Element "<< i<< " Nodes  ";
+      for(int j=testIAJA.IA[i]; j<testIAJA.IA[i+1]; j++) cout<<"    "<< testIAJA.JA[j];
+      cout<<endl;
+  }
+
+  cout<<"\nПечать обратной топологии из класса IA_JA"<<endl;
+  cout<<"Всего элементов "<< testIAJA.NnRevertElements<<endl;
+    cout<<"Элемент                     узлы\n";
+  for(int i=0; i<testIAJA.NnRevertElements; i++)
+  {
+      cout<<"Element "<< i<< " Nodes  ";
+      for(int j=testIAJA.IArevert[i]; j<testIAJA.IArevert[i+1]; j++) cout<<"    "<< testIAJA.JArevert[j];
       cout<<endl;
   }
 

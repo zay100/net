@@ -27,7 +27,22 @@
 #define MAX_ELEMENTS_PER_NODE 8 //максимальное количество элементов в которых может содержаться узел
 #define MAX_RIBS_PER_NODE 8 //максимальное количество ребер в которых может содержаться узел
 
-// класс ячеек основной сетки
+class IA_JA
+{
+public:
+  int NnElements; // количество узлов
+  int NnRevertElements; // количество узлов для обратной записи
+  const char * Comment; // описание что храниться чтобы выводить на печать/экран
+  int * IA; // прямая запись
+  int * JA;
+  int * IArevert; // обратная запись Деление условное, завист от того что заполняется первым
+  int * JArevert;
+
+  void IAJAmakeRevert ();
+
+  IA_JA(){NnElements = 0; IA = JA = IArevert= JArevert= NULL;}
+  ~IA_JA(){};
+};
 
 // класс ячеек основной сетки
 class CellClassNG
@@ -96,13 +111,14 @@ public:
   int * IAadj;
   int * JAadj;
 
+  class IA_JA testIAJA;
+
   void printTopoElementsNG ();
   void ExportTopo (const char * name);
 
   TopoClassNG (){}; // конструктор по умолчанию
   ~TopoClassNG(){};
 };
-
 
 class NetClassNG : public VertexClassNG, public EdgeClassNG, public TopoClassNG, public CellClassNG
 {
@@ -125,111 +141,4 @@ class NetClassNG : public VertexClassNG, public EdgeClassNG, public TopoClassNG,
 
   // int getVertex(int a, int b); // номер вершины по известны x y
 
-};
-
-
-
-
-
-
-
-
-
-
-//класс сетки
-class NetClass
-{
-  public:
-  // const static int type_k=DIAG_ASCEND; // для данного варианта всегда  такая / диагональ
-  int Nx,Ny,Lx,Ly,K,M; // параметры для построения сетки
-  int Nn,Nbf,Ncells,Nk,Nm; // число узлов, ребер, прямоугольных ячеек, ячеек типа K, M
-  int ANn;
-  int NFaceBC;  //?? количество узлов на внешней грани - разобраться
-
-  class VertexClass * vertex_p; // ссылка на массив узлов
-  class CellClass * cell_p; // массив ячеек
-  //class _CellClass _Cells;
-  class EdgeClass * edge;
-
-  NetClass (int Nx_, int Ny_ , int K_ , int M_ );
-
-  int getVertex(int a, int b); // номер вершины по известны x y
-
-};
-
-
-class EdgeClass
-{
-public:
-  int number; // количество ребер на гранях
-  int ** ANbf; // ?? номера двух вершин и номер грания с левой=1 по часовой
-  class NetClass * net_p;
-  EdgeClass (class NetClass *);
-  ~EdgeClass();
-};
-
-
-// класс элементов топологии - хранит элементы с координатами вершин
-class TopoClass
-{
-public:
-  int Ne; // общее число элементов в топологии
-  int * IA;
-  int * JA;
-  class NetClass *net_p;
-
-  TopoClass (class NetClass * net); // конструктор прямой топологии из данных о сети
-  TopoClass (class TopoClass * topo); // конструктор обратной топологии на основе прямой
-  ~TopoClass();
-};
-
-// класс внешних граней
-/* class EdgeClass
-{
-public:
-  int number; // количество ребер на гранях
-  int ** ANbf; // ?? номера двух вершин и номер грания с левой=1 по часовой
-  class NetClass * net_p;
-  EdgeClass (class NetClass * net);
-  ~EdgeClass();
-};
-*/
-// класс координат вершин по первоначальной сетке
-class VertexClass
-{
-public:
-  class NetClass * net_p;
-  int number_; //количество вершин
-  int ** ANn; // массив координат
-
-  int GetX(int i);
-  int GetY(int i);
-  VertexClass (class NetClass * net); // стандартный конструктор
-  ~VertexClass();
-};
-
-// класс ячеек основной сетки
-class CellClass
-{
-public:
-  class NetClass * net_p;
-  int number_; //количество ячеек
-  int * ANcell; // массив со значениями типа ячейки K или М
-  int GetType (int i); //возвращает тип ячейки по номеру ячейки
-  int GetType (int node, int direction); // возвращает тип ячeйки номеру узла и направлению на ячейку от узла
-  CellClass (class NetClass * net); // стандартный конструктор
-  ~CellClass();
-};
-
-// класс соседей - связей между узлами
-class NNadjClass
-{
-public:
-  class NetClass * net_p;
-  int * IA; // количество соседей для узла
-  int * JA; // номера соседних узлов
-  int nnadj_number;
-
-  NNadjClass (class NetClass * net_);
-  ~NNadjClass();
 };
