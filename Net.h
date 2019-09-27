@@ -74,6 +74,7 @@ public:
   EdgeClassNG (int , int);
   ~EdgeClassNG(){};
 
+  void ExportEdge (const char * name);
   void PrintEdgeArray();
 
 };
@@ -96,6 +97,7 @@ public:
   int * JAadj;
 
   void printTopoElementsNG ();
+  void ExportTopo (const char * name);
 
   TopoClassNG (){}; // конструктор по умолчанию
   ~TopoClassNG(){};
@@ -116,7 +118,7 @@ class NetClassNG : public VertexClassNG, public EdgeClassNG, public TopoClassNG,
   //int GetVertexX(int i) {return ((i<0)||(i>=Nn))?ERROR:i%Nx;} //Получить номер столбца узла в сетке по номеру узла
   //int GetVertexY(int i) {return ((i<0)||(i>=Nn))?ERROR:i/Nx;} //Получить номер строки узла в сетке по номеру узла
   int GetVertexNG (int a, int b) {return (a+Nx*b);} // возврат номера узла по его положению на сетке
-
+  void ExportNetParametres (const char * name);
   void InitTopo (int K, int M,  int Ncells, int Nx, int Nn, class NetClassNG * net_p);
 
   NetClassNG (int Nx_, int Ny_ , int K_ , int M_ );
